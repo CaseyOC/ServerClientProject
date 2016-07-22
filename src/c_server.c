@@ -13,11 +13,10 @@ void error(char *msg){
 
 int main(int argc, char *argv[]){
   //initialize variables
-  int sockfd, newsockfd, portno;
+  int sockfd, newsockfd, portno, n;
   unsigned int clilen;
   char buffer[256];
   struct sockaddr_in serv_addr, cli_addr;
-  int n;
   if (argc < 2) {
     fprintf(stderr,"ERROR, no port provided\n");
     exit(1);
@@ -52,6 +51,7 @@ int main(int argc, char *argv[]){
   //and can communicate with newsockfd
   if (newsockfd < 0)
     error("ERROR on accept");
+  printf("Now listening\n");
   bzero(buffer,256);
   n = read(newsockfd,buffer,255);
   if (n < 0) error("ERROR reading from socket");
@@ -60,5 +60,6 @@ int main(int argc, char *argv[]){
   printf("Responded to client\n");
   if (n < 0) error("ERROR writing to socket");
 
+  close(newsockfd);
   return 0;
 }

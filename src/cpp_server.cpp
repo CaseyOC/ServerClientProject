@@ -24,7 +24,13 @@ int main(int argc, char* argv[]){
     printf("No port provided");
     _exit(1);
   }
-  portno = argv[1];
+  if (atoi(argv[1]) != 0){
+   portno = argv[1];
+  }
+  else{
+    fprintf(stderr,"Invalid port number: %s\n", argv[1]);
+    _exit(0);
+  }
 
   //empty hints
   memset(& hints, 0, sizeof hints);
@@ -32,6 +38,9 @@ int main(int argc, char* argv[]){
   hints.ai_family = AF_UNSPEC;
   hints.ai_socktype = SOCK_STREAM;
   hints.ai_flags = AI_PASSIVE;
+  char hostname[256];
+  hostname[255] = '\0';
+  gethostname(hostname,255);
 
   //fill the res structure
   status = getaddrinfo(NULL, portno , &hints, &res);
@@ -55,10 +64,10 @@ int main(int argc, char* argv[]){
   if(status < 0){
     fprintf(stderr,"listen: %s\n",gai_strerror(status));
   }
-  printf("Now listening\n");
+  printf("Now listening on host: %s port: %s\n", hostname, portno);
+
   //free the res linked list
   freeaddrinfo(res);
-
 
   int new_conn_fd, n;
   char buffer[256];
@@ -66,23 +75,26 @@ int main(int argc, char* argv[]){
   socklen_t addr_size;
   char s[INET6_ADDRSTRLEN];
   addr_size = sizeof client_addr;
+  const char* ip_addr;
 
-  //accept a new connection and return back the socket desciptor
-  new_conn_fd = accept(listener, (struct sockaddr *) & client_addr, &addr_size);
-  if(new_conn_fd < 0){
-    fprintf(stderr,"accept: %s\n",gai_strerror(new_conn_fd));
+  while(1){
+    //accept a new connection and return back the socket desciptor
+    new_conn_fd = accept(listener, (struct sockaddr *) & client_addr, &addr_size);
+    if(new_conn_fd < 0){
+      fprintf(stderr,"accept: %s\n",gai_strerror(new_conn_fd));
+    }
+    ip_addr = inet_ntop(client_addr.ss_family, get_in_addr((struct sockaddr *) &client_addr),s ,sizeof s);
+
+    n = read(new_conn_fd, buffer, 256);
+
+    printf("Message from client: %s \n",buffer);
+    status = write(new_conn_fd,"World!\n", 6);
+    if(status == -1){
+      close(new_conn_fd);
+      _exit(4);
+    }
+    printf("Responded to client at address: %s\n", ip_addr);
   }
-  inet_ntop(client_addr.ss_family, get_in_addr((struct sockaddr *) &client_addr),s ,sizeof s);
-  n = read(new_conn_fd, buffer, 256);
-
-  printf("Message from client: %s \n",buffer);
-  status = write(new_conn_fd,"World!\n", 6);
-  if(status == -1){
-    close(new_conn_fd);
-    _exit(4);
-  }
-  printf("Responded\n");
-
   //close the socket
   close(new_conn_fd);
   return 0;

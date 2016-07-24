@@ -1,1 +1,9 @@
 .DS_Store
+c_client
+c_server
+cpp_client
+cpp_server
+c_client.o
+c_server.o
+cpp_client.o
+cpp_server.o

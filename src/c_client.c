@@ -13,9 +13,9 @@ void error(char *msg){
   exit(0);
 }
 
-int hostname_to_ip(char * hostname , char* ip){
-  struct hostent *he;
-  struct in_addr **addr_list;
+int hostname_to_ip(char* hostname , char* ip){
+  struct hostent* he;
+  struct in_addr** addr_list;
   int i;
 
   if ( (he = gethostbyname( hostname ) ) == NULL) {
@@ -35,14 +35,13 @@ int hostname_to_ip(char * hostname , char* ip){
 }
 
 int main(int argc, char *argv[]){
-  int sockfd, portno, n;
-
+  int tcpsockfd, udpsockfd, portno, n;
   struct sockaddr_in serv_addr;
   struct hostent* he;
   struct in_addr** addr_list;
   char ip[50];
+  char buffer[255];
 
-  char buffer[256];
   if (argc < 3) {
     fprintf(stderr,"usage %s hostname port\n", argv[0]);
     exit(0);
@@ -54,8 +53,13 @@ int main(int argc, char *argv[]){
     fprintf(stderr,"Invalid port number: %s\n", argv[2]);
     _exit(0);
   }
-  sockfd = socket(AF_INET, SOCK_STREAM, 0);
-  if (sockfd < 0) error("ERROR opening socket");
+
+  //try to create the tcp socket
+  tcpsockfd = socket(AF_INET, SOCK_STREAM, 0);
+  //try to create the udp socket
+  udpsockfd = socket(PF_INET, SOCK_DGRAM, 0);
+  if (udpsockfd < 0 && tcpsockfd < 0) error("ERROR opening socket");
+
 
   if(inet_addr(argv[1]) == -1){
     if ((he = gethostbyname(argv[1])) == NULL){
@@ -77,23 +81,40 @@ int main(int argc, char *argv[]){
   serv_addr.sin_family = AF_INET;
   bcopy((char *)he->h_addr, (char *)&serv_addr.sin_addr.s_addr, he->h_length);
   serv_addr.sin_port = htons(portno);
-  if (connect(sockfd,(struct sockaddr *)&serv_addr,sizeof(serv_addr)) < 0){
-    error("ERROR connecting");
-    _exit(0);
+  if (tcpsockfd != -1){
+    if (connect(tcpsockfd,(struct sockaddr *)&serv_addr,sizeof(serv_addr)) < 0){
+      error("ERROR connecting");
+      _exit(0);
+    }
+    //Connect to remote server
+    printf("Connected\n");
   }
-  //Connect to remote server
-  printf("Connected\n");
 
-  //while(1){  //should the client always run as well?
-  printf("Message to server: ");
-  bzero(buffer,256);
-  fgets(buffer,255,stdin);
-  n = write(sockfd,buffer,strlen(buffer));
-  if (n < 0) error("ERROR writing to socket");
-  bzero(buffer,256);
-  n = read(sockfd,buffer,255);
-  if (n < 0) error("ERROR reading from socket");
-  printf("%s\n",buffer);
+  //while(1){
+    printf("Message to server: ");
+    bzero(buffer,255);
+    fgets(buffer,254,stdin);
+    if (tcpsockfd != -1){
+      n = write(tcpsockfd,buffer,strlen(buffer));
+      if (n < 0) error("ERROR writing to socket");
+      bzero(buffer,255);
+      n = read(tcpsockfd,buffer,255);
+      buffer[(n > 0) ? n : 0] = '\0';
+      if (n < 0) error("ERROR reading from socket");
+      printf("%s\n",buffer);
+
+    }
+    else if( udpsockfd != -1){
+      sendto(udpsockfd,buffer,strlen(buffer),0,(struct sockaddr *)&serv_addr, sizeof(serv_addr));
+      bzero(buffer,255);
+      n = recvfrom(udpsockfd, buffer, 255, 0, NULL, NULL);
+      buffer[(n > 0) ? n : 0] = '\0';
+      printf("%s\n",buffer);
+    }
+    else{
+      printf("Connection error");
+      _exit(0);
+    }
   //}
 
   return 0;

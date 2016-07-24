@@ -18,7 +18,7 @@ void * get_in_addr(struct sockaddr* sa){
 int main(int argc, char* argv[]){
   int status, listener;
   char* portno;
-  struct addrinfo hints, * res;
+  struct addrinfo hints, *res;
 
   if (argc < 2){
     printf("No port provided");
@@ -26,8 +26,7 @@ int main(int argc, char* argv[]){
   }
   if (atoi(argv[1]) != 0){
    portno = argv[1];
-  }
-  else{
+  } else{
     fprintf(stderr,"Invalid port number: %s\n", argv[1]);
     _exit(0);
   }
@@ -47,25 +46,21 @@ int main(int argc, char* argv[]){
   if(status != 0){
     fprintf(stderr,"getaddrinfo error: %s\n",gai_strerror(status));
   }
-
   //create Socket
   listener = socket(res->ai_family,res->ai_socktype, res->ai_protocol);
   if(listener < 0 ){
     fprintf(stderr,"socket error: %s\n",gai_strerror(status));
   }
-
   //bind the socket to local machine and port number
   status = bind(listener, res->ai_addr, res->ai_addrlen);
   if(status < 0){
     fprintf(stderr,"bind: %s\n",gai_strerror(status));
   }
-
   status = listen(listener, 10);
   if(status < 0){
     fprintf(stderr,"listen: %s\n",gai_strerror(status));
   }
   printf("Now listening on host: %s port: %s\n", hostname, portno);
-
   //free the res linked list
   freeaddrinfo(res);
 

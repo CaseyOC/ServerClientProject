@@ -44,12 +44,14 @@ int main(int argc, char *argv[]){
   //clear the address struct
   bzero((char*) &serv_addr, sizeof(serv_addr));
   if (atoi(argv[1]) != 0){
-    portno = atoi(argv[1]);
+    if(atoi(argv[1]) < 2000 || atoi(argv[1]) > 65535){
+      fprintf(stderr,"Invalid port number: %s\n", argv[1]);
+      _exit(0);
+    }
+    else
+      portno = atoi(argv[1]);
   }
-  else{
-    fprintf(stderr,"Invalid port number: %s\n", argv[1]);
-    _exit(0);
-  }
+
   //setup host_addr struct
   serv_addr.sin_family = AF_INET;
   serv_addr.sin_addr.s_addr = INADDR_ANY;

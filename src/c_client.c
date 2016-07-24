@@ -47,11 +47,12 @@ int main(int argc, char *argv[]){
     exit(0);
   }
   if (atoi(argv[2]) != 0){
-    portno = atoi(argv[2]);
-  }
-  else{
-    fprintf(stderr,"Invalid port number: %s\n", argv[2]);
-    _exit(0);
+    if(atoi(argv[2]) < 2000 || atoi(argv[2]) > 65535){
+      fprintf(stderr,"Invalid port number: %s\n", argv[2]);
+      _exit(0);
+    }
+    else
+      portno = atoi(argv[2]);
   }
 
   //try to create the tcp socket

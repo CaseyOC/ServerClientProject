@@ -1,4 +1,4 @@
-This is a project oriented around TCP/IP server and client communications
+This is a project oriented around TCP and UDP IP, server and client communications
 
 Run the binaries (located in the bin directory), and give the server a port number
   (2000 - 65535). Give the client the hostname (the name of your
